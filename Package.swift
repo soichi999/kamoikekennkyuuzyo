@@ -6,14 +6,29 @@ import PackageDescription
 let package = Package(
     name: "鴨池研究所",
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .executableTarget(
-            name: "鴨池研究所"
+        // Backend: データ処理・ロジック
+        .target(
+            name: "Backend"
         ),
         .testTarget(
-            name: "鴨池研究所Tests",
-            dependencies: ["鴨池研究所"]
+            name: "BackendTests",
+            dependencies: ["Backend"]
+        ),
+
+        // Frontend: 画面表示・入出力(Backendに依存)
+        .target(
+            name: "Frontend",
+            dependencies: ["Backend"]
+        ),
+        .testTarget(
+            name: "FrontendTests",
+            dependencies: ["Frontend"]
+        ),
+
+        // App: エントリーポイント
+        .executableTarget(
+            name: "App",
+            dependencies: ["Frontend"]
         ),
     ],
     swiftLanguageModes: [.v6]
