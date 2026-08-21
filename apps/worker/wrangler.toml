@@ -1,0 +1,25 @@
+name = "kakekomi-api"
+main = "src/index.js"
+compatibility_date = "2026-08-21"
+
+# ============================================================
+# Phase 2 で追加予定の設定（コメントアウト）
+# ============================================================
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "kakekomi-db"
+# database_id = ""
+
+# [[kv_namespaces]]
+# binding = "PAIRING_KV"
+# id = ""
+
+# [triggers]
+# crons = ["0 13 * * *"]  # 22:00 JST
+
+# ============================================================
+# Phase 2 で追加予定の環境変数
+# ============================================================
+# [vars]
+# AI_MODEL = "@cf/meta/llama-4-scout"
