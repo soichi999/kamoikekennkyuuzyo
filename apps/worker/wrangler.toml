@@ -2,24 +2,28 @@ name = "kakekomi-api"
 main = "src/index.ts"
 compatibility_date = "2026-08-21"
 
-# ============================================================
-# Phase 2 で追加予定の設定（コメントアウト）
-# ============================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "kakekomi-db"
+database_id = "00000000-0000-0000-0000-000000000000" # `wrangler d1 create kakekomi-db` 実行後に差し替える
+migrations_dir = "migrations"
 
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "kakekomi-db"
-# database_id = ""
+[[kv_namespaces]]
+binding = "PAIRING_KV"
+id = "00000000000000000000000000000000" # `wrangler kv namespace create kakekomi-pairing` 実行後に差し替える
 
-# [[kv_namespaces]]
-# binding = "PAIRING_KV"
-# id = ""
+[triggers]
+crons = ["0 13 * * *"] # 22:00 JST
 
-# [triggers]
-# crons = ["0 13 * * *"]  # 22:00 JST
+# Workers AI バインディング。ローカル/テスト実行中に有効化すると、実際のCloudflareアカウントへ
+# リモート接続してしまう（wranglerにログイン済みの別アカウントに繋がる恐れがあり、課金も発生しうる）。
+# 当日、ハッカソン特典アカウントの認証情報が用意できてから有効化すること。
+# [ai]
+# binding = "AI"
 
-# ============================================================
-# Phase 2 で追加予定の環境変数
-# ============================================================
-# [vars]
-# AI_MODEL = "@cf/meta/llama-4-scout"
+[vars]
+SCORING_IMPL = "mock" # "mock" | "real"
+AI_PROVIDER = "template" # "workers-ai" | "anthropic" | "template" — AI バインディング未設定の間は template 固定にする
+# ADMIN_TOKEN と ANTHROPIC_API_KEY は秘密情報のため vars に書かない。
+# ローカル開発: .dev.vars に ADMIN_TOKEN=... を書く（.gitignore 済み）
+# 本番: `wrangler secret put ADMIN_TOKEN` / `wrangler secret put ANTHROPIC_API_KEY`

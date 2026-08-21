@@ -4,14 +4,23 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "hono": "^4.13.3"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260820.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.11",
     "wrangler": "^4.125.0"
+  },
+  "allowScripts": {
+    "workerd@1.20260815.1": true,
+    "workerd@1.20260820.1": true,
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
   }
 }
