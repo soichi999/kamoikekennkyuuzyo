@@ -1,5 +1,21 @@
 # カケコミ API - Worker
 
+## セットアップ
+
+初回は依存パッケージをインストールします。
+
+```bash
+cd apps/worker
+npm install
+```
+
+## 型チェック
+
+```bash
+cd apps/worker
+npm run typecheck
+```
+
 ## ローカル起動
 
 ```bash
