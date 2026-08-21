@@ -60,3 +60,19 @@
 
 - このCLAUDE.mdはプロジェクトの進行に合わせて更新し続けること。ただし、プロジェクトに関することのみ書くこと。自分の好みの設定は、個人のCLAUDE.mdへ。
 - tadasの場合、.claude/settings.mdを見てから始めること。これは、自由に変更して良い。
+
+## 使用スキル
+
+以下のスキルが利用可能です。`skills-lock.json` で管理しており、初回セットアップ時に以下を実行してインストールしてください。
+
+```bash
+npx skills install
+```
+
+スキルは `.gitignore` 対象のためリポジトリには含まれません。
+
+- [agents-sdk](https://skills.sh/cloudflare/skills/agents-sdk) — ステートフルエージェント・Workflows・WebSocket
+- [cloudflare](https://skills.sh/cloudflare/skills/cloudflare) — Cloudflare 全般（Workers, D1, KV, R2, AI等）
+- [wrangler](https://skills.sh/cloudflare/skills/wrangler) — wrangler CLI 操作
+- [workers-best-practices](https://skills.sh/cloudflare/skills/workers-best-practices) — Workers 実装のベストプラクティス
+- [durable-objects](https://skills.sh/cloudflare/skills/durable-objects) — Durable Objects の実装・レビュー
