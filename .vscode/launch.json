@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kamoikekennkyuuzyo}/apps/swift",
+            "name": "Debug App",
+            "target": "App",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug App"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kamoikekennkyuuzyo}/apps/swift",
+            "name": "Release App",
+            "target": "App",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release App"
+        }
+    ]
+}
