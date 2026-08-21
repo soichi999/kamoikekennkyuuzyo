@@ -254,6 +254,7 @@ struct Hotspot: Codable, Identifiable, Hashable {
 
 /// 日次結果のサマリー。今日の危険ポイント画面で使用
 struct DailySummary: Codable, Hashable {
+    let format: String
     let forParent: String
     let forChild: String
     let talkingPoints: [String]
@@ -261,6 +262,7 @@ struct DailySummary: Codable, Hashable {
     let model: String
 
     enum CodingKeys: String, CodingKey {
+        case format
         case forParent = "for_parent"
         case forChild = "for_child"
         case talkingPoints = "talking_points"
@@ -331,8 +333,8 @@ struct DailyResponse: Codable {
 /// 週間グラフの1日分。週間グラフ画面で使用
 struct DayScore: Codable, Hashable {
     let date: String
-    let totalScore: Int
-    let level: RiskLevel
+    let totalScore: Int?
+    let level: RiskLevel?
     let hasHotspot: Bool
 
     enum CodingKeys: String, CodingKey {
@@ -348,8 +350,8 @@ struct WeeklyResponse: Codable {
     let childId: String
     let end: String
     let days: [DayScore]
-    let average: Int
-    let baselineScore: Int
+    let average: Int?
+    let baselineScore: Int?
 
     enum CodingKeys: String, CodingKey {
         case childId = "child_id"
@@ -366,6 +368,29 @@ struct HealthResponse: Codable {
     let version: String
     let phase: String
     let endpoints: [String]
+    let scoringImpl: String
+    let aiProvider: String
+
+    enum CodingKeys: String, CodingKey {
+        case app, version, phase, endpoints
+        case scoringImpl = "scoring_impl"
+        case aiProvider = "ai_provider"
+    }
+}
+
+// MARK: - Admin
+
+/// 管理者向け日次集計実行レスポンス
+struct AdminAggregateResponse: Codable {
+    let ok: Bool
+    let childId: String
+    let date: String
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case childId = "child_id"
+        case date
+    }
 }
 
 // MARK: - API Client
@@ -433,12 +458,15 @@ actor KakekomiAPI {
 
     // MARK: - Private Helpers
 
-    private func request(path: String, method: String = "GET", body: Data? = nil) -> URLRequest {
+    private func request(path: String, method: String = "GET", body: Data? = nil, familyId: String? = nil) -> URLRequest {
         let url = URL(string: baseURL + path)!
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = body
+        if let familyId = familyId {
+            req.setValue(familyId, forHTTPHeaderField: "X-Family-Id")
+        }
         return req
     }
 
@@ -469,15 +497,15 @@ actor KakekomiAPI {
     // MARK: - 子ども一覧（親アプリ）
 
     func fetchChildren(familyId: String) async throws -> ChildrenResponse {
-        let req = request(path: "/v1/family/\(familyId)/children")
+        let req = request(path: "/v1/family/\(familyId)/children", familyId: familyId)
         return try await perform(req)
     }
 
     // MARK: - 位置情報送信（子アプリ）
 
-    func submitLocations(childId: String, points: [LocationPoint]) async throws -> LocationResponse {
+    func submitLocations(childId: String, points: [LocationPoint], familyId: String) async throws -> LocationResponse {
         let body = try JSONEncoder().encode(LocationRequest(childId: childId, points: points))
-        let req = request(path: "/v1/locations", method: "POST", body: body)
+        let req = request(path: "/v1/locations", method: "POST", body: body, familyId: familyId)
         return try await perform(req)
     }
 
@@ -502,19 +530,19 @@ actor KakekomiAPI {
 
     // MARK: - 日次結果（今日の危険ポイント）
 
-    func fetchDaily(childId: String, date: String? = nil) async throws -> DailyResponse {
+    func fetchDaily(childId: String, date: String? = nil, familyId: String) async throws -> DailyResponse {
         var path = "/v1/children/\(childId)/daily"
         if let date = date { path += "?date=\(date)" }
-        let req = request(path: path)
+        let req = request(path: path, familyId: familyId)
         return try await perform(req)
     }
 
     // MARK: - 週間グラフ
 
-    func fetchWeekly(childId: String, end: String? = nil) async throws -> WeeklyResponse {
+    func fetchWeekly(childId: String, end: String? = nil, familyId: String) async throws -> WeeklyResponse {
         var path = "/v1/children/\(childId)/weekly"
         if let end = end { path += "?end=\(end)" }
-        let req = request(path: path)
+        let req = request(path: path, familyId: familyId)
         return try await perform(req)
     }
 
@@ -522,6 +550,14 @@ actor KakekomiAPI {
 
     func health() async throws -> HealthResponse {
         let req = request(path: "/v1")
+        return try await perform(req)
+    }
+
+    // MARK: - 管理者: 日次集計手動実行
+
+    func adminAggregate(childId: String, date: String, adminToken: String) async throws -> AdminAggregateResponse {
+        var req = request(path: "/v1/admin/aggregate", method: "POST", body: try JSONEncoder().encode(["child_id": childId, "date": date]))
+        req.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
         return try await perform(req)
     }
 }
