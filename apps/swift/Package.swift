@@ -5,6 +5,10 @@ import PackageDescription
 
 let package = Package(
     name: "鴨池研究所",
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v14),
+    ],
     targets: [
         // Backend: データ処理・ロジック
         .target(
