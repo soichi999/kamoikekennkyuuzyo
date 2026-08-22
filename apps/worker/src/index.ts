@@ -2,7 +2,6 @@ import { Hono, Context } from 'hono'
 import { cors } from 'hono/cors'
 import {
   jstNow, toJSTString, toJSTDateString, parseJST,
-  randomString, randomDigits,
   levelFromScore,
   type Factor, type RiskLevel, type LocationPoint, type LocationResult, type GridCell, type TrackPoint, type Refuge,
 } from './score.js'
@@ -14,7 +13,7 @@ import { scorePoint, scoreGrid, nearestRefuge } from './scoring/index.js'
 import { fetchDaily, fetchTrack, fetchDailyRange, type DailyRow } from './aggregation/repository.js'
 import type { Hotspot, DailyStats } from './aggregation/types.js'
 import { aggregateDailyWithSummary, runDailyAggregationForDate } from './aggregation/runDaily.js'
-import { checkRateLimit } from './rateLimit.js'
+import { checkRateLimit, isFailureLimited, recordFailure, MAX_PAIRING_FAILURES_PER_WINDOW } from './rateLimit.js'
 
 interface PairingCreateResponse {
   code: string
@@ -202,8 +201,16 @@ app.post('/v1/pairing/redeem', async (c) => {
   if (!code || code === '') {
     return c.json({ error: { code: 'MISSING_CODE', message: 'codeは必須です' } } satisfies ErrorBody, 400 as const)
   }
+  // 6桁コードの総当たり対策。「失敗回数」だけを数えるため、
+  // 会場Wi-Fiのように多数の端末が同一IPを共有していても正当なペアリングは巻き込まれない。
+  const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
+  const failureKey = `redeem:${clientIp}`
+  if (await isFailureLimited(c.env, failureKey, MAX_PAIRING_FAILURES_PER_WINDOW)) {
+    return c.json({ error: { code: 'RATE_LIMITED', message: 'コードの試行回数が多すぎます。しばらく待って再試行してください' } } satisfies ErrorBody, 429 as const)
+  }
   const result = await redeemPairing(c.env, code, body.child_name)
   if (!result.ok) {
+    await recordFailure(c.env, failureKey)
     return c.json({ error: { code: 'CODE_NOT_FOUND', message: '指定されたコードが見つかりません' } } satisfies ErrorBody, 404 as const)
   }
   const res: PairingRedeemResponse = {

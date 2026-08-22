@@ -10,7 +10,9 @@ export interface CreatePairingResult {
 }
 
 export async function createPairing(env: Env): Promise<CreatePairingResult> {
-  const familyId = 'fam_' + randomString(8)
+  // 22文字 x 32種 = 110bit 相当。family_id は X-Family-Id として認証に使われるため、
+  // 推測不可能な長さにする。
+  const familyId = 'fam_' + randomString(22)
   const now = jstNow()
   await env.DB.prepare('INSERT INTO family (family_id, created_at) VALUES (?, ?)')
     .bind(familyId, toJSTString(now))
@@ -36,7 +38,7 @@ export async function redeemPairing(env: Env, code: string, childName: string | 
   // 使い捨てコードのため即削除する
   await env.PAIRING_KV.delete(key)
 
-  const childId = 'chd_' + randomString(8)
+  const childId = 'chd_' + randomString(22)
   const now = jstNow()
   const name = childName || '名無し'
   // home/school は未取得のため 0,0 で仮登録する。Swift側の追加入力フローで更新する想定。

@@ -5,25 +5,29 @@ compatibility_date = "2026-08-21"
 [[d1_databases]]
 binding = "DB"
 database_name = "kakekomi-db"
-database_id = "00000000-0000-0000-0000-000000000000" # `wrangler d1 create kakekomi-db` 実行後に差し替える
+database_id = "fa73f782-d0d2-4830-aebb-19875510b464" # 2026-08-22 作成 (region APAC)
 migrations_dir = "migrations"
 
 [[kv_namespaces]]
 binding = "PAIRING_KV"
-id = "00000000000000000000000000000000" # `wrangler kv namespace create kakekomi-pairing` 実行後に差し替える
+id = "31834c202d834ebdae61320cd87ad47b" # 2026-08-22 作成
 
 [triggers]
 crons = ["0 13 * * *"] # 22:00 JST
 
-# Workers AI バインディング。ローカル/テスト実行中に有効化すると、実際のCloudflareアカウントへ
-# リモート接続してしまう（wranglerにログイン済みの別アカウントに繋がる恐れがあり、課金も発生しうる）。
-# 当日、ハッカソン特典アカウントの認証情報が用意できてから有効化すること。
-# [ai]
-# binding = "AI"
+# Workers AI バインディング。
+# 2026-08-22 に `wrangler whoami` でハッカソン特典アカウント (tokyo_odh_480) への
+# ログインを確認したうえで有効化した。
+# 注意: 有効な状態で `wrangler dev` を実行するとリモートの Workers AI を呼び出し、課金対象になる。
+# vitest は vitest.config.ts で AI_PROVIDER='template' を上書きしてリモート呼び出しを防いでいる。
+[ai]
+binding = "AI"
 
 [vars]
 SCORING_IMPL = "mock" # "mock" | "real"
-AI_PROVIDER = "template" # "workers-ai" | "anthropic" | "template" — AI バインディング未設定の間は template 固定にする
-# ADMIN_TOKEN と ANTHROPIC_API_KEY は秘密情報のため vars に書かない。
+AI_PROVIDER = "workers-ai" # "workers-ai" | "template"
+# AI は Cloudflare Workers AI (@cf/google/gemma-4-26b-a4b-it) のみを使う。外部の AI API は使わない。
+# workers-ai が失敗した場合は template（固定文面）に自動フォールバックする。
+# ADMIN_TOKEN は秘密情報のため vars に書かない。
 # ローカル開発: .dev.vars に ADMIN_TOKEN=... を書く（.gitignore 済み）
-# 本番: `wrangler secret put ADMIN_TOKEN` / `wrangler secret put ANTHROPIC_API_KEY`
+# 本番: `wrangler secret put ADMIN_TOKEN`

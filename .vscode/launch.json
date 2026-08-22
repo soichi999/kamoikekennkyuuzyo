@@ -19,6 +19,26 @@
             "target": "App",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release App"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kamoikekennkyuuzyo}/apps/swift",
+            "name": "Debug App (apps/swift)",
+            "target": "App",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug App (apps/swift)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:kamoikekennkyuuzyo}/apps/swift",
+            "name": "Release App (apps/swift)",
+            "target": "App",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release App (apps/swift)"
         }
     ]
 }

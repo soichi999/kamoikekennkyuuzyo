@@ -71,8 +71,7 @@ kamoikekennkyuuzyo/
 │       │   │   ├── types.ts # AiSummary / AiGenerateInput
 │       │   │   ├── prompt.ts# AI用プロンプト構築
 │       │   │   ├── template.ts # テンプレート固定要約 (フォールバック)
-│       │   │   ├── workersAi.ts # Workers AI (Qwen) 呼び出し
-│       │   │   ├── anthropic.ts # Anthropic API 呼び出し (claude-haiku)
+│       │   │   ├── workersAi.ts # Workers AI (gemma-4-26b-a4b-it) 呼び出し
 │       │   │   └── parse.ts # AI応答JSONパース (```json 対応)
 │       │   └── aggregation/
 │       │       ├── types.ts # ScoredPoint / Hotspot / DailyStats
@@ -113,6 +112,7 @@ kamoikekennkyuuzyo/
 ### 2. 認証設計
 
 - **親（家族）認証**: `X-Family-Id` ヘッダ必須（401）、他家族のリソースは403
+- **`family_id` は秘密情報**: `crypto.getRandomValues()` で生成した22文字（110bit相当）。これ自体が認証情報を兼ねるため、ログ等に出さないこと
 - **child_id の所有権確認**: 各ハンドラ内で D1 に問い合わせてチェック
 - **管理者認証**: `Authorization: Bearer <ADMIN_TOKEN>` 必須（401）
 - **子の認証**: なし（アプリ上の親設定フローでのみペアリング）
@@ -121,7 +121,7 @@ kamoikekennkyuuzyo/
 
 1. 親アプリが `POST /v1/pairing/create` → 6桁コード + family_id + QRペイロードを取得
 2. 子アプリがコードを入力 → `POST /v1/pairing/redeem` → family_id + child_id を取得
-3. コードは KV（10分TTL）に保存、読み取りと同時に削除（使い捨て）
+3. コードは KV（10分TTL）に保存、読み取りと同時に削除（使い捨て）。コードも `crypto.getRandomValues()` 生成（rejection sampling で剰余バイアス無し）
 4. child の home/school は `0,0` で仮登録、Swift側で後入力
 
 ### 4. スコアリング
@@ -178,12 +178,16 @@ ON CONFLICT (child_id, at) DO UPDATE SET ...
 
 ### 8. AI要約（Phase 5）
 
-- `AI_PROVIDER` 環境変数で "workers-ai" | "anthropic" | "template" 切替
-- Workers AI: `@cf/qwen/qwen3-30b-a3b-fp8`, 10秒タイムアウト
-- Anthropic: `claude-haiku-4-5`, 10秒タイムアウト
+- **AI は Cloudflare Workers AI のみを使う。外部の AI API（Anthropic 等）は使わない。**
+- `AI_PROVIDER` 環境変数で "workers-ai" | "template" 切替（既定は wrangler.toml で "workers-ai"）
+- Workers AI: **`@cf/google/gemma-4-26b-a4b-it`**（モデル固定）, `max_tokens=4096`, 40秒タイムアウト
+- **gemma-4 は推論モデル**。応答は OpenAI 互換形式 (`choices[0].message.content`) で返り、本文とは別に `reasoning_content` を生成する
+    - 推論トークンも `max_tokens` を消費するため、上限が小さいと推論だけで打ち切られ `content` が空になる（実測: 1024/2048 は打ち切り、4096 で完走）
+    - 応答の取り出しは `workersAi.ts` の `extractText()`。旧来の `{ response }` 形式にも対応
+- 所要時間は 14〜26 秒とばらつく。デモ中に手動集計を叩くなら事前に一度温めておくこと
 - **フォールバック**: AI呼び出し失敗時は template（固定文面）にフォールバック
 - **例外安全性**: AI生成が例外を投げても集計自体は status:'ready' を維持
-- **`[ai]` バインディング**: wrangler.tomlではコメントアウト中。有効化するとローカルでもリモートWorkerに繋がるため注意
+- **`[ai]` バインディング**: 有効化済み。**常にリモート**に繋がり課金対象になるため、テストは `vitest.config.ts` で `AI_PROVIDER='template'` を上書きして密閉している
 - **AI応答パース**: 生JSONと ```json フェンス両対応
 
 ### 9. Cron / 集計トリガー
@@ -215,6 +219,8 @@ CREATE INDEX idx_daily_child_date ON daily (child_id, date);
 ### 11. レート制限
 
 - `POST /v1/locations`: 同一 child_id で 1分間に60リクエスト
+- `POST /v1/pairing/redeem`: 同一IPからの**失敗**が1分間に20回（6桁コードの総当たり対策）
+    - **成功はカウントしない。** 会場Wi-Fiのように多数の端末が同一グローバルIPを共有していても、正当なペアリングが429にならないようにするため
 - KV の固定ウィンドウ方式（厳密さより実装単純さ優先）
 - 超過時: 429 `RATE_LIMITED`
 
@@ -233,10 +239,9 @@ CREATE INDEX idx_daily_child_date ON daily (child_id, date);
 | `DB`                | D1 バインディング         | 必須         | wrangler.toml                                 |
 | `PAIRING_KV`        | KV バインディング         | 必須         | wrangler.toml                                 |
 | `SCORING_IMPL`      | スコアリング実装切替      | `"mock"`     | `"mock"` / `"real"`                           |
-| `AI_PROVIDER`       | AIプロバイダ切替          | `"template"` | `"workers-ai"` / `"anthropic"` / `"template"` |
+| `AI_PROVIDER`       | AIプロバイダ切替          | `"workers-ai"` | `"workers-ai"` / `"template"`                 |
 | `ADMIN_TOKEN`       | 管理API認証               | なし         | 秘密（secrets）                               |
-| `ANTHROPIC_API_KEY` | Anthropic API Key         | なし         | 秘密（secrets）                               |
-| `AI`                | Workers AI バインディング | なし         | wrangler.toml でコメントアウト中              |
+| `AI`                | Workers AI バインディング | 必須         | wrangler.toml で有効化済み（リモート課金あり）|
 
 ## /docs 運用ルール
 
