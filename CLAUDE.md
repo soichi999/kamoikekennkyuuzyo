@@ -34,11 +34,11 @@
 1. 初回セットアップ画面: 「コードを発行」ボタン → 6桁コードを表示
 2. 子ども一覧画面: 複数の子がいる場合の切り替え用（1人だけなら省略してホームへ直行でもOK）
 3. **ホーム画面**（タブ1）
-   - 子のスコア推移グラフ（期間は左右スワイプで切替、`GET /v1/children/{id}/weekly` 相当）
-   - 「今日の危険だったポイント」リスト（`daily` のホットスポット、最大5件、タップで詳細）
+    - 子のスコア推移グラフ（期間は左右スワイプで切替、`GET /v1/children/{id}/weekly` 相当）
+    - 「今日の危険だったポイント」リスト（`daily` のホットスポット、最大5件、タップで詳細）
 4. **マップ画面**（タブ2）
-   - 通学路を安全（緑）/ 注意（黄）/ 危険（赤）の3段階で色分け表示（`level` を色分けの基準にする、scoreの数値そのままでは色を変えない）
-   - 現在地・学校などの地点マーカー表示
+    - 通学路を安全（緑）/ 注意（黄）/ 危険（赤）の3段階で色分け表示（`level` を色分けの基準にする、scoreの数値そのままでは色を変えない）
+    - 現在地・学校などの地点マーカー表示
 
 タブ1・タブ2は明確に分離する（スクロールで繋げず、別画面として扱う）。
 
@@ -49,7 +49,7 @@
 
 ## プロジェクト構造
 
-```
+````
 kamoikekennkyuuzyo/
 ├── apps/
 │   └── worker/              # Cloudflare Workers バックエンド (Hono + TypeScript)
@@ -90,25 +90,25 @@ kamoikekennkyuuzyo/
 │       └── package.json
 ├── docs/                    # 作業記録
 └── CLAUDE.md                # 本ファイル
-```
+````
 
 ## 設計の詳細
 
 ### 1. API エンドポイント一覧（全 9 エンドポイント）
 
-| Method | Path | Auth | 説明 |
-|--------|------|------|------|
-| GET | `/` | なし | ヘルスチェック（scoring_impl, ai_provider を返す） |
-| GET | `/v1` | なし | 同上 |
-| POST | `/v1/pairing/create` | なし | ペアリングコード発行（6桁数字、KV 10分TTL・使い捨て） |
-| POST | `/v1/pairing/redeem` | なし | コード交換（削除してからD1にchild登録） |
-| GET | `/v1/family/:family_id/children` | X-Family-Id | 家族に紐づく子一覧 |
-| POST | `/v1/locations` | X-Family-Id | 位置情報送信（最大500件、D1 UPSERT） |
-| GET | `/v1/score?lat=&lng=&at=` | なし | 1地点のスコア |
-| GET | `/v1/grid?bbox=&zoom=&at=` | なし | 範囲内グリッドスコア |
-| GET | `/v1/children/:child_id/daily?date=` | X-Family-Id | 日次集計（pending/no_data/ready） |
-| GET | `/v1/children/:child_id/weekly?end=` | X-Family-Id | 週次サマリー（7日間、欠損はnull埋め） |
-| POST | `/v1/admin/aggregate` | Bearer ADMIN_TOKEN | 集計+AI要約の手動実行 |
+| Method | Path                                 | Auth               | 説明                                                  |
+| ------ | ------------------------------------ | ------------------ | ----------------------------------------------------- |
+| GET    | `/`                                  | なし               | ヘルスチェック（scoring_impl, ai_provider を返す）    |
+| GET    | `/v1`                                | なし               | 同上                                                  |
+| POST   | `/v1/pairing/create`                 | なし               | ペアリングコード発行（6桁数字、KV 10分TTL・使い捨て） |
+| POST   | `/v1/pairing/redeem`                 | なし               | コード交換（削除してからD1にchild登録）               |
+| GET    | `/v1/family/:family_id/children`     | X-Family-Id        | 家族に紐づく子一覧                                    |
+| POST   | `/v1/locations`                      | X-Family-Id        | 位置情報送信（最大500件、D1 UPSERT）                  |
+| GET    | `/v1/score?lat=&lng=&at=`            | なし               | 1地点のスコア                                         |
+| GET    | `/v1/grid?bbox=&zoom=&at=`           | なし               | 範囲内グリッドスコア                                  |
+| GET    | `/v1/children/:child_id/daily?date=` | X-Family-Id        | 日次集計（pending/no_data/ready）                     |
+| GET    | `/v1/children/:child_id/weekly?end=` | X-Family-Id        | 週次サマリー（7日間、欠損はnull埋め）                 |
+| POST   | `/v1/admin/aggregate`                | Bearer ADMIN_TOKEN | 集計+AI要約の手動実行                                 |
 
 ### 2. 認証設計
 
@@ -128,10 +128,10 @@ kamoikekennkyuuzyo/
 
 - `SCORING_IMPL` 環境変数で "mock" | "real" を切替
 - **mock**: `score.ts` の `hashScore()` + `timeBonus()` で擬似乱数的スコア（0-100）
-  - 時間帯補正: 6-14時=0, 15-16時=+6, 17-18時=+18, 19-5時=+28
-  - `levelFromScore`: 0-33=safe, 34-66=caution, 67-100=danger
-  - factors: refuge / crime / traffic / lighting
-  - 避難所 `nearestRefuges()`: 固定4件から擬似選択
+    - 時間帯補正: 6-14時=0, 15-16時=+6, 17-18時=+18, 19-5時=+28
+    - `levelFromScore`: 0-33=safe, 34-66=caution, 67-100=danger
+    - factors: refuge / crime / traffic / lighting
+    - 避難所 `nearestRefuges()`: 固定4件から擬似選択
 - **real**: 当日オープンデータ連携用スタブ（未実装）
 
 ### 5. スコアリングI/F (scoring/index.ts)
@@ -140,9 +140,9 @@ kamoikekennkyuuzyo/
 
 ```typescript
 interface ScoringImpl {
-  scorePoint(input: ScorePointInput): ScorePointResult       // 1地点
-  scoreGrid(input: ScoreGridInput): ScoreGridResult           // グリッド
-  nearestRefuge(input: NearestRefugeInput): NearestRefugeResult // 避難所
+    scorePoint(input: ScorePointInput): ScorePointResult; // 1地点
+    scoreGrid(input: ScoreGridInput): ScoreGridResult; // グリッド
+    nearestRefuge(input: NearestRefugeInput): NearestRefugeResult; // 避難所
 }
 ```
 
@@ -161,18 +161,18 @@ ON CONFLICT (child_id, at) DO UPDATE SET ...
 
 1. **D1取得**: 指定 child_id × date の全 location を `ORDER BY at ASC`
 2. **ホットスポット抽出**: `extractHotspots()`
-   - score >= 67 の点をフィルタ
-   - 5分以内かつ200m以内の点をクラスタリング
-   - クラスタ内の最大 score 点を代表点に
-   - 最大5件まで、時刻昇順、hotspot_id 採番
+    - score >= 67 の点をフィルタ
+    - 5分以内かつ200m以内の点をクラスタリング
+    - クラスタ内の最大 score 点を代表点に
+    - 最大5件まで、時刻昇順、hotspot_id 採番
 3. **総合スコア**: `computeTotalScore()`
-   - 各点の滞在時間（次の点との差分、最終点は直前の差分を流用）
-   - スコア × 滞在時間の加重平均
-   - ホットスポット数 × 5 のペナルティ加算（上限15）
-   - `min(100, round(avg + penalty))`
+    - 各点の滞在時間（次の点との差分、最終点は直前の差分を流用）
+    - スコア × 滞在時間の加重平均
+    - ホットスポット数 × 5 のペナルティ加算（上限15）
+    - `min(100, round(avg + penalty))`
 4. **ベースライン**: `computeBaseline()`
-   - 過去14日分の同じchildのready daily から中央値
-   - 7日未満の履歴は null
+    - 過去14日分の同じchildのready daily から中央値
+    - 7日未満の履歴は null
 5. **統計**: `computeStats()` → 距離・時間・件数・出発/到着時刻
 6. **D1保存**: `daily` テーブルに UPSERT
 
@@ -221,21 +221,22 @@ CREATE INDEX idx_daily_child_date ON daily (child_id, date);
 ### 12. エラーレスポンス形式
 
 全エラーレスポンスは統一フォーマット:
+
 ```json
 { "error": { "code": "UPPER_SNAKE_CASE", "message": "人間可読な日本語" } }
 ```
 
 ### 13. 環境変数 / バインディング
 
-| 変数 | 用途 | 既定値 | 備考 |
-|------|------|--------|------|
-| `DB` | D1 バインディング | 必須 | wrangler.toml |
-| `PAIRING_KV` | KV バインディング | 必須 | wrangler.toml |
-| `SCORING_IMPL` | スコアリング実装切替 | `"mock"` | `"mock"` / `"real"` |
-| `AI_PROVIDER` | AIプロバイダ切替 | `"template"` | `"workers-ai"` / `"anthropic"` / `"template"` |
-| `ADMIN_TOKEN` | 管理API認証 | なし | 秘密（secrets） |
-| `ANTHROPIC_API_KEY` | Anthropic API Key | なし | 秘密（secrets） |
-| `AI` | Workers AI バインディング | なし | wrangler.toml でコメントアウト中 |
+| 変数                | 用途                      | 既定値       | 備考                                          |
+| ------------------- | ------------------------- | ------------ | --------------------------------------------- |
+| `DB`                | D1 バインディング         | 必須         | wrangler.toml                                 |
+| `PAIRING_KV`        | KV バインディング         | 必須         | wrangler.toml                                 |
+| `SCORING_IMPL`      | スコアリング実装切替      | `"mock"`     | `"mock"` / `"real"`                           |
+| `AI_PROVIDER`       | AIプロバイダ切替          | `"template"` | `"workers-ai"` / `"anthropic"` / `"template"` |
+| `ADMIN_TOKEN`       | 管理API認証               | なし         | 秘密（secrets）                               |
+| `ANTHROPIC_API_KEY` | Anthropic API Key         | なし         | 秘密（secrets）                               |
+| `AI`                | Workers AI バインディング | なし         | wrangler.toml でコメントアウト中              |
 
 ## /docs 運用ルール
 
