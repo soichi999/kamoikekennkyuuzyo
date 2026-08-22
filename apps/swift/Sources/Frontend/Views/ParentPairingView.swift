@@ -5,7 +5,7 @@ public struct ParentPairingView: View {
     @State private var viewModel: ParentPairingViewModel
     @Environment(AppSession.self) private var session
 
-    public init(apiBaseURL: String = "http://localhost:8787") {
+    public init(apiBaseURL: String = APIConfig.baseURL) {
         _viewModel = State(initialValue: ParentPairingViewModel(apiBaseURL: apiBaseURL))
     }
 

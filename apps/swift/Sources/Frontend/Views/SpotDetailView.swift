@@ -7,7 +7,7 @@ public struct SpotDetailView: View {
     private let lat: Double
     private let lng: Double
 
-    public init(lat: Double, lng: Double, apiBaseURL: String = "http://localhost:8787") {
+    public init(lat: Double, lng: Double, apiBaseURL: String = APIConfig.baseURL) {
         self.lat = lat
         self.lng = lng
         _viewModel = State(initialValue: SpotDetailViewModel(apiBaseURL: apiBaseURL))

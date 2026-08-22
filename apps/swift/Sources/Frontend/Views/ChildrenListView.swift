@@ -5,7 +5,7 @@ public struct ChildrenListView: View {
     @State private var viewModel: ChildrenViewModel
     @Environment(AppSession.self) private var session
 
-    public init(apiBaseURL: String = "http://localhost:8787") {
+    public init(apiBaseURL: String = APIConfig.baseURL) {
         _viewModel = State(initialValue: ChildrenViewModel(apiBaseURL: apiBaseURL))
     }
 

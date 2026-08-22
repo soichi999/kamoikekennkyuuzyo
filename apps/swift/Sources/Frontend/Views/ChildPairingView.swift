@@ -6,7 +6,7 @@ public struct ChildPairingView: View {
     private let onPaired: (PairingRedeemResponse) -> Void
 
     public init(
-        apiBaseURL: String = "http://localhost:8787",
+        apiBaseURL: String = APIConfig.baseURL,
         onPaired: @escaping (PairingRedeemResponse) -> Void = { _ in }
     ) {
         _viewModel = State(initialValue: ChildPairingViewModel(apiBaseURL: apiBaseURL))

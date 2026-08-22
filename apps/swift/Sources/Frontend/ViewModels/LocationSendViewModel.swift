@@ -18,7 +18,7 @@ public final class LocationSendViewModel {
     private let api: KakekomiAPI
     private let tracker: LocationTracker
 
-    public init(apiBaseURL: String = "http://localhost:8787") {
+    public init(apiBaseURL: String = APIConfig.baseURL) {
         self.api = KakekomiAPI(baseURL: apiBaseURL)
         self.tracker = LocationTracker()
     }

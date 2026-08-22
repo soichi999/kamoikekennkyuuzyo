@@ -16,7 +16,7 @@ public struct HeatmapView: View {
         center: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 35.6895, longitude: 139.6917),
         childId: String? = nil,
         familyId: String? = nil,
-        apiBaseURL: String = "http://localhost:8787"
+        apiBaseURL: String = APIConfig.baseURL
     ) {
         self.center = center
         self.childId = childId

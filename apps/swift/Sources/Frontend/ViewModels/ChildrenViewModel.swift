@@ -15,7 +15,7 @@ public final class ChildrenViewModel {
 
     private let api: KakekomiAPI
 
-    public init(apiBaseURL: String = "http://localhost:8787") {
+    public init(apiBaseURL: String = APIConfig.baseURL) {
         self.api = KakekomiAPI(baseURL: apiBaseURL)
     }
 

@@ -14,7 +14,7 @@ public struct ParentMapView: View {
         var id: String { "\(coordinate.latitude),\(coordinate.longitude)" }
     }
 
-    public init(apiBaseURL: String = "http://localhost:8787") {
+    public init(apiBaseURL: String = APIConfig.baseURL) {
         _viewModel = State(initialValue: ParentMapViewModel(apiBaseURL: apiBaseURL))
     }
 

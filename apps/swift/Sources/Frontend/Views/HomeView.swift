@@ -13,7 +13,7 @@ public struct HomeView: View {
     public init(
         childId: String,
         familyId: String,
-        apiBaseURL: String = "http://localhost:8787"
+        apiBaseURL: String = APIConfig.baseURL
     ) {
         self.childId = childId
         self.familyId = familyId
