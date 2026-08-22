@@ -1,1 +1,1 @@
-README.mdをよく読むこと。
+CLAUDE.md をよく読むこと。
