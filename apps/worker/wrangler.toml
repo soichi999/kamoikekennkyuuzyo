@@ -5,12 +5,12 @@ compatibility_date = "2026-08-21"
 [[d1_databases]]
 binding = "DB"
 database_name = "kakekomi-db"
-database_id = "00000000-0000-0000-0000-000000000000" # `wrangler d1 create kakekomi-db` 実行後に差し替える
+database_id = "fa73f782-d0d2-4830-aebb-19875510b464" # 2026-08-22 作成 (region APAC)
 migrations_dir = "migrations"
 
 [[kv_namespaces]]
 binding = "PAIRING_KV"
-id = "00000000000000000000000000000000" # `wrangler kv namespace create kakekomi-pairing` 実行後に差し替える
+id = "31834c202d834ebdae61320cd87ad47b" # 2026-08-22 作成
 
 [triggers]
 crons = ["0 13 * * *"] # 22:00 JST

@@ -18,6 +18,21 @@
 
 デプロイは未実施のまま保留中。
 
+### 追記: D1 / KV を作成（2026-08-22 11:44）
+
+| リソース | 名前 | ID |
+| --- | --- | --- |
+| D1 | `kakekomi-db` | `fa73f782-d0d2-4830-aebb-19875510b464`（region APAC） |
+| KV | `kakekomi-pairing` | `31834c202d834ebdae61320cd87ad47b` |
+
+`wrangler.toml` に ID を反映。バインディング名は wrangler の提案（`kakekomi_db` 等）ではなく
+コード側の `DB` / `PAIRING_KV` を維持している。
+
+`wrangler d1 migrations apply kakekomi-db --remote` で `0001_init.sql` を適用済み。
+リモートに `family` / `child` / `location` / `daily` の4テーブルを確認。
+
+**まだ `wrangler deploy` は実行していない。** 残りは `wrangler secret put ADMIN_TOKEN` と deploy のみ。
+
 ## 2. AI プロバイダの決定（対応済み）
 
 **AI は Cloudflare Workers AI のみを使う。モデルは `@cf/google/gemma-4-26b-a4b-it` に固定。
