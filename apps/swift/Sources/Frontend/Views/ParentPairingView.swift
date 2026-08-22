@@ -3,6 +3,7 @@ import SwiftUI
 /// 親アプリ: 初回セットアップ画面。「コードを発行」ボタン→6桁コードを表示する。
 public struct ParentPairingView: View {
     @State private var viewModel: ParentPairingViewModel
+    @Environment(AppSession.self) private var session
 
     public init(apiBaseURL: String = "http://localhost:8787") {
         _viewModel = State(initialValue: ParentPairingViewModel(apiBaseURL: apiBaseURL))
@@ -31,6 +32,9 @@ public struct ParentPairingView: View {
                     Text("お子さまの端末でこのコードを入力してください")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                }
+                .onAppear {
+                    session.setFamilyId(pairing.familyId)
                 }
 
             case .failed(let message):
