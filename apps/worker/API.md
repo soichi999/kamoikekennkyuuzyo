@@ -74,7 +74,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 ```json
 {
   "code": "482915",
-  "family_id": "fam_8f2a1c94",
+  "family_id": "fam_7k2m9qx4v8hb3npr5wzt6y",
   "expires_at": "2026-08-21T12:10:00+09:00",
   "qr_payload": "kakekomi://pair?code=482915"
 }
@@ -83,7 +83,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 | フィールド | 型 | 説明 |
 |---|---|---|
 | `code` | string | 6桁の数字。ペアリングコード |
-| `family_id` | string | ファミリーID (`fam_` + 英数字8文字) |
+| `family_id` | string | ファミリーID (`fam_` + 英数字22文字)。**秘密情報として扱うこと**（`X-Family-Id` に使う認証情報を兼ねる） |
 | `expires_at` | string (ISO8601) | コードの有効期限（作成から10分後） |
 | `qr_payload` | string | QRコードに埋め込むディープリンク |
 
@@ -109,8 +109,8 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **レスポンス例**:
 ```json
 {
-  "family_id": "fam_8f2a1c94",
-  "child_id": "chd_3b7e05d1",
+  "family_id": "fam_7k2m9qx4v8hb3npr5wzt6y",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "name": "はると",
   "paired_at": "2026-08-21T12:03:00+09:00"
 }
@@ -120,7 +120,12 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 | コード | HTTP ステータス | 条件 |
 |---|---|---|
 | `MISSING_CODE` | 400 | `code` が未指定または空文字 |
-| `CODE_NOT_FOUND` | 404 | `code` が `"000000"`（テスト用の固定ケース） |
+| `CODE_NOT_FOUND` | 404 | `code` が存在しない、期限切れ(10分)、または使用済み |
+| `RATE_LIMITED` | 429 | 同一IPからの**失敗**が1分あたり20回を超過 |
+
+**レート制限**: 総当たり対策として、同一IPからのコード**失敗**を1分あたり20回までに制限します。
+成功したペアリングはカウントしないため、同一のグローバルIPを共有する環境（会場Wi-Fi等）でも
+正当な操作が巻き込まれることはありません。
 
 ---
 
@@ -133,7 +138,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 {
   "children": [
     {
-      "child_id": "chd_3b7e05d1",
+      "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
       "name": "はると",
       "grade": "小学4年",
       "home": { "lat": 35.6421, "lng": 139.6532 },
@@ -146,7 +151,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 
 | フィールド | 型 | 説明 |
 |---|---|---|
-| `children[].child_id` | string | 子どもID (`chd_` + 英数字) |
+| `children[].child_id` | string | 子どもID (`chd_` + 英数字22文字) |
 | `children[].name` | string | 子どもの名前 |
 | `children[].grade` | string | 学年 |
 | `children[].home` | object | 自宅の座標 `{ lat, lng }` |
@@ -162,7 +167,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **リクエスト**:
 ```json
 {
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "points": [
     { "lat": 35.6478, "lng": 139.6601, "at": "2026-08-20T15:42:00+09:00" }
   ]
@@ -304,7 +309,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **レスポンス例（データ準備完了）**:
 ```json
 {
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "date": "2026-08-20",
   "status": "ready",
   "total_score": 64,
@@ -354,7 +359,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **レスポンス例（位置情報未記録）**:
 ```json
 {
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "date": "2026-08-21",
   "status": "no_data",
   "message": "この日は位置情報が記録されていません"
@@ -402,7 +407,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **レスポンス例**:
 ```json
 {
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "end": "2026-08-20",
   "days": [
     { "date": "2026-08-14", "total_score": 38, "level": "caution", "has_hotspot": false },
@@ -455,7 +460,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 **リクエスト**:
 ```json
 {
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "date": "2026-08-21"
 }
 ```
@@ -469,7 +474,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 ```json
 {
   "ok": true,
-  "child_id": "chd_3b7e05d1",
+  "child_id": "chd_4n8v2hq7wm5xk9bt3zpr6s",
   "date": "2026-08-21"
 }
 ```
@@ -502,7 +507,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 | コード | HTTP ステータス | 発生条件 |
 |---|---|---|
 | `MISSING_CODE` | 400 | pairing/redeem で `code` が未指定または空文字 |
-| `CODE_NOT_FOUND` | 404 | pairing/redeem で `code` が `"000000"`（テスト用） |
+| `CODE_NOT_FOUND` | 404 | pairing/redeem で `code` が存在しない・期限切れ・使用済み |
 | `MISSING_CHILD_ID` | 400 | locations 送信で `child_id` が未指定 |
 | `MISSING_POINTS` | 400 | locations 送信で `points` が未指定または配列でない |
 | `TOO_MANY_POINTS` | 400 | locations 送信で `points` が500件超 |
@@ -512,7 +517,7 @@ D1/KV/Cron/AI による実装が完了し、実データを返します。**レ�
 | `NOT_FOUND` | 404 | 存在しないパスへのアクセス |
 | `UNAUTHORIZED` | 401 | X-Family-Id ヘッダ未指定、または管理者認証(Authorization)が不正 |
 | `FORBIDDEN` | 403 | 他人のfamily/childへのアクセス |
-| `RATE_LIMITED` | 429 | /v1/locations のレート制限超過 |
+| `RATE_LIMITED` | 429 | /v1/locations のレート制限超過、または pairing/redeem の失敗回数超過 |
 | `MISSING_PARAMS` | 400 | /v1/admin/aggregate で child_id または date が未指定 |
 
 ---
@@ -537,6 +542,8 @@ Phase 2–6 で以下の実装が完了しています。
 - **サマリー生成**: Workers AI または Anthropic API による実際の文章生成に移行
 - **実際のデータに基づくスコア**: 位置情報・犯罪統計・街灯データ等を反映
 - **レート制限**: `POST /v1/locations` に同一 `child_id` で1分あたり60回まで（超過は 429）
+- **レート制限**: `POST /v1/pairing/redeem` は同一IPからの失敗が1分あたり20回まで（成功は数えない）
+- **ID生成**: `family_id` / `child_id` / ペアリングコードは `crypto.getRandomValues()` で生成（`Math.random()` は使わない）
 - **新しいエンドポイント**: `POST /v1/admin/aggregate` を追加（管理者用 手動集計実行）
 - **`GET /v1/children/{child_id}/daily`**: `status` に `"no_data"` を追加、`summary` に `format` フィールドを追加、`baseline_score`/`diff_from_baseline` がデータ不足時に `null` になる仕様を追加
 - **`GET /v1/children/{child_id}/weekly`**: `days[].total_score` / `days[].level` / `average` / `baseline_score` がデータ不足時に `null` になる仕様を追加

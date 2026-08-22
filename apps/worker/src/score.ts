@@ -75,16 +75,34 @@ export function getJSTHour(jstDate: Date): number {
   return jstDate.getUTCHours()
 }
 
+// ID・ペアリングコードの生成には必ず crypto.getRandomValues() を使う。
+// Math.random() は暗号学的に安全ではなく、出力から内部状態を復元されうるため、
+// family_id / child_id / ペアリングコードのような推測されては困る値には使わない。
+
+// ちょうど32文字（2の冪）の英数字。ビットマスク(& 31)で剰余バイアス無しに選べる。
+// 紛らわしい文字 (i, l, o, u) は除外している。
+const ID_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz'
+
 export function randomString(len: number): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(len)
+  crypto.getRandomValues(bytes)
   let r = ''
-  for (let i = 0; i < len; i++) r += chars[Math.floor(Math.random() * chars.length)]
+  for (let i = 0; i < len; i++) r += ID_ALPHABET[bytes[i]! & 31]
   return r
 }
 
+// 0-9 の一様乱数。256 は 10 で割り切れないため、剰余バイアスを避けるべく
+// 250 以上のバイトは捨てて引き直す（rejection sampling）。
 export function randomDigits(len: number): string {
   let r = ''
-  for (let i = 0; i < len; i++) r += Math.floor(Math.random() * 10)
+  while (r.length < len) {
+    const bytes = new Uint8Array(len - r.length)
+    crypto.getRandomValues(bytes)
+    for (const b of bytes) {
+      if (b >= 250) continue
+      r += b % 10
+    }
+  }
   return r
 }
 

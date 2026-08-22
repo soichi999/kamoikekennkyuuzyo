@@ -112,6 +112,7 @@ kamoikekennkyuuzyo/
 ### 2. 認証設計
 
 - **親（家族）認証**: `X-Family-Id` ヘッダ必須（401）、他家族のリソースは403
+- **`family_id` は秘密情報**: `crypto.getRandomValues()` で生成した22文字（110bit相当）。これ自体が認証情報を兼ねるため、ログ等に出さないこと
 - **child_id の所有権確認**: 各ハンドラ内で D1 に問い合わせてチェック
 - **管理者認証**: `Authorization: Bearer <ADMIN_TOKEN>` 必須（401）
 - **子の認証**: なし（アプリ上の親設定フローでのみペアリング）
@@ -120,7 +121,7 @@ kamoikekennkyuuzyo/
 
 1. 親アプリが `POST /v1/pairing/create` → 6桁コード + family_id + QRペイロードを取得
 2. 子アプリがコードを入力 → `POST /v1/pairing/redeem` → family_id + child_id を取得
-3. コードは KV（10分TTL）に保存、読み取りと同時に削除（使い捨て）
+3. コードは KV（10分TTL）に保存、読み取りと同時に削除（使い捨て）。コードも `crypto.getRandomValues()` 生成（rejection sampling で剰余バイアス無し）
 4. child の home/school は `0,0` で仮登録、Swift側で後入力
 
 ### 4. スコアリング
@@ -214,6 +215,8 @@ CREATE INDEX idx_daily_child_date ON daily (child_id, date);
 ### 11. レート制限
 
 - `POST /v1/locations`: 同一 child_id で 1分間に60リクエスト
+- `POST /v1/pairing/redeem`: 同一IPからの**失敗**が1分間に20回（6桁コードの総当たり対策）
+    - **成功はカウントしない。** 会場Wi-Fiのように多数の端末が同一グローバルIPを共有していても、正当なペアリングが429にならないようにするため
 - KV の固定ウィンドウ方式（厳密さより実装単純さ優先）
 - 超過時: 429 `RATE_LIMITED`
 
