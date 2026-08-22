@@ -180,7 +180,11 @@ ON CONFLICT (child_id, at) DO UPDATE SET ...
 
 - **AI は Cloudflare Workers AI のみを使う。外部の AI API（Anthropic 等）は使わない。**
 - `AI_PROVIDER` 環境変数で "workers-ai" | "template" 切替（既定は wrangler.toml で "workers-ai"）
-- Workers AI: **`@cf/google/gemma-4-26b-a4b-it`**（モデル固定）, 10秒タイムアウト
+- Workers AI: **`@cf/google/gemma-4-26b-a4b-it`**（モデル固定）, `max_tokens=4096`, 40秒タイムアウト
+- **gemma-4 は推論モデル**。応答は OpenAI 互換形式 (`choices[0].message.content`) で返り、本文とは別に `reasoning_content` を生成する
+    - 推論トークンも `max_tokens` を消費するため、上限が小さいと推論だけで打ち切られ `content` が空になる（実測: 1024/2048 は打ち切り、4096 で完走）
+    - 応答の取り出しは `workersAi.ts` の `extractText()`。旧来の `{ response }` 形式にも対応
+- 所要時間は 14〜26 秒とばらつく。デモ中に手動集計を叩くなら事前に一度温めておくこと
 - **フォールバック**: AI呼び出し失敗時は template（固定文面）にフォールバック
 - **例外安全性**: AI生成が例外を投げても集計自体は status:'ready' を維持
 - **`[ai]` バインディング**: 有効化済み。**常にリモート**に繋がり課金対象になるため、テストは `vitest.config.ts` で `AI_PROVIDER='template'` を上書きして密閉している

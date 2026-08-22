@@ -3,6 +3,7 @@ import { env } from 'cloudflare:test'
 import worker from '../src/index'
 import { randomString, randomDigits } from '../src/score'
 import { MAX_PAIRING_FAILURES_PER_WINDOW } from '../src/rateLimit'
+import { extractText } from '../src/ai/workersAi'
 
 async function fetchApp(path: string, init?: RequestInit) {
   const req = new Request(`https://example.com${path}`, init)
@@ -93,5 +94,33 @@ describe('Phase 7-E: ペアリングコードの失敗回数レート制限', ()
       const res = await redeem(created.code, ip, `child-${i}`)
       expect(res.status).toBe(200)
     }
+  })
+})
+
+describe('Phase 7: Workers AI 応答形状の取り出し', () => {
+  // gemma-4 は OpenAI 互換形式で返す。ここを取り違えると要約が黙って
+  // template にフォールバックし続けるため、形状ごとに固定しておく。
+  it('OpenAI 互換形式から content を取り出す', () => {
+    expect(extractText({
+      choices: [{ message: { content: '{"a":1}', reasoning_content: '考え中...', role: 'assistant' } }],
+      model: '@cf/google/gemma-4-26b-a4b-it-external',
+    })).toBe('{"a":1}')
+  })
+
+  it('reasoning_content ではなく content を返す', () => {
+    expect(extractText({
+      choices: [{ message: { content: 'ほんとうの答え', reasoning_content: 'ここは使わない' } }],
+    })).toBe('ほんとうの答え')
+  })
+
+  it('旧来の { response } 形式も受け付ける', () => {
+    expect(extractText({ response: 'テキスト' })).toBe('テキスト')
+  })
+
+  it('未知の形状は null を返す', () => {
+    expect(extractText({ foo: 'bar' })).toBeNull()
+    expect(extractText({ choices: [] })).toBeNull()
+    expect(extractText(null)).toBeNull()
+    expect(extractText('文字列')).toBeNull()
   })
 })

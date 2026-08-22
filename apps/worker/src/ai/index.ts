@@ -15,9 +15,11 @@ export async function generateSummary(env: Env, input: AiGenerateInput): Promise
     if (provider === 'workers-ai') {
       const result = await generateWithWorkersAi(env, input)
       if (result) return result
+      console.error('[ai] workers-ai が結果を返さなかったため template にフォールバックします')
     }
-  } catch {
-    // フォールバックへ
+  } catch (err) {
+    // フォールバックへ。無言で落とすと本番で原因が追えないため必ず記録する。
+    console.error('[ai] 生成に失敗したため template にフォールバックします:', err)
   }
   return generateTemplateSummary(input)
 }
