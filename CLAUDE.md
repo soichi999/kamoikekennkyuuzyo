@@ -71,8 +71,7 @@ kamoikekennkyuuzyo/
 │       │   │   ├── types.ts # AiSummary / AiGenerateInput
 │       │   │   ├── prompt.ts# AI用プロンプト構築
 │       │   │   ├── template.ts # テンプレート固定要約 (フォールバック)
-│       │   │   ├── workersAi.ts # Workers AI (Qwen) 呼び出し
-│       │   │   ├── anthropic.ts # Anthropic API 呼び出し (claude-haiku)
+│       │   │   ├── workersAi.ts # Workers AI (gemma-4-26b-a4b-it) 呼び出し
 │       │   │   └── parse.ts # AI応答JSONパース (```json 対応)
 │       │   └── aggregation/
 │       │       ├── types.ts # ScoredPoint / Hotspot / DailyStats
@@ -178,12 +177,12 @@ ON CONFLICT (child_id, at) DO UPDATE SET ...
 
 ### 8. AI要約（Phase 5）
 
-- `AI_PROVIDER` 環境変数で "workers-ai" | "anthropic" | "template" 切替
-- Workers AI: `@cf/qwen/qwen3-30b-a3b-fp8`, 10秒タイムアウト
-- Anthropic: `claude-haiku-4-5`, 10秒タイムアウト
+- **AI は Cloudflare Workers AI のみを使う。外部の AI API（Anthropic 等）は使わない。**
+- `AI_PROVIDER` 環境変数で "workers-ai" | "template" 切替（既定は wrangler.toml で "workers-ai"）
+- Workers AI: **`@cf/google/gemma-4-26b-a4b-it`**（モデル固定）, 10秒タイムアウト
 - **フォールバック**: AI呼び出し失敗時は template（固定文面）にフォールバック
 - **例外安全性**: AI生成が例外を投げても集計自体は status:'ready' を維持
-- **`[ai]` バインディング**: wrangler.tomlではコメントアウト中。有効化するとローカルでもリモートWorkerに繋がるため注意
+- **`[ai]` バインディング**: 有効化済み。**常にリモート**に繋がり課金対象になるため、テストは `vitest.config.ts` で `AI_PROVIDER='template'` を上書きして密閉している
 - **AI応答パース**: 生JSONと ```json フェンス両対応
 
 ### 9. Cron / 集計トリガー
@@ -233,10 +232,9 @@ CREATE INDEX idx_daily_child_date ON daily (child_id, date);
 | `DB`                | D1 バインディング         | 必須         | wrangler.toml                                 |
 | `PAIRING_KV`        | KV バインディング         | 必須         | wrangler.toml                                 |
 | `SCORING_IMPL`      | スコアリング実装切替      | `"mock"`     | `"mock"` / `"real"`                           |
-| `AI_PROVIDER`       | AIプロバイダ切替          | `"template"` | `"workers-ai"` / `"anthropic"` / `"template"` |
+| `AI_PROVIDER`       | AIプロバイダ切替          | `"workers-ai"` | `"workers-ai"` / `"template"`                 |
 | `ADMIN_TOKEN`       | 管理API認証               | なし         | 秘密（secrets）                               |
-| `ANTHROPIC_API_KEY` | Anthropic API Key         | なし         | 秘密（secrets）                               |
-| `AI`                | Workers AI バインディング | なし         | wrangler.toml でコメントアウト中              |
+| `AI`                | Workers AI バインディング | 必須         | wrangler.toml で有効化済み（リモート課金あり）|
 
 ## /docs 運用ルール
 

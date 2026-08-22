@@ -2,9 +2,8 @@ export interface Env {
   DB: D1Database
   PAIRING_KV: KVNamespace
   SCORING_IMPL?: string
-  AI_PROVIDER?: string
+  AI_PROVIDER?: 'workers-ai' | 'template'
   ADMIN_TOKEN?: string
-  ANTHROPIC_API_KEY?: string
   AI?: Ai
 }
 

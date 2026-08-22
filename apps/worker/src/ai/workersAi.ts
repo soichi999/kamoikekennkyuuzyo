@@ -4,8 +4,8 @@ import { buildPrompt } from './prompt.js'
 import { parseAiJson } from './parse.js'
 import { jstNow, toJSTString } from '../score.js'
 
-// ハッカソン特典の Cloudflare Workers AI モデル
-const MODEL = '@cf/qwen/qwen3-30b-a3b-fp8'
+// ハッカソン特典の Cloudflare Workers AI モデル（本プロジェクトはこのモデルのみを使う）
+const MODEL = '@cf/google/gemma-4-26b-a4b-it'
 const TIMEOUT_MS = 10000
 
 export async function generateWithWorkersAi(env: Env, input: AiGenerateInput): Promise<AiSummary | null> {
