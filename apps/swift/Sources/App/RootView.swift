@@ -50,10 +50,11 @@ struct RootView: View {
                 ParentPairingView()
             case .childPairing:
                 ChildPairingView { response in
-                    print("ペアリング完了: child_id=\(response.childId)")
+                    session.setFamilyId(response.familyId)
+                    session.selectChild(response.childId)
                 }
             case .heatmap:
-                HeatmapView()
+                HeatmapView(childId: session.selectedChildId, familyId: session.familyId)
             }
         }
         .environment(session)

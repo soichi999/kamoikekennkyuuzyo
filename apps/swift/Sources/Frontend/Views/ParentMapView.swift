@@ -6,7 +6,13 @@ import MapKit
 public struct ParentMapView: View {
     @State private var viewModel: ParentMapViewModel
     @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var selectedSpot: SelectedSpot?
     @Environment(AppSession.self) private var session
+
+    private struct SelectedSpot: Identifiable {
+        let coordinate: CLLocationCoordinate2D
+        var id: String { "\(coordinate.latitude),\(coordinate.longitude)" }
+    }
 
     public init(apiBaseURL: String = "http://localhost:8787") {
         _viewModel = State(initialValue: ParentMapViewModel(apiBaseURL: apiBaseURL))
@@ -19,26 +25,29 @@ public struct ParentMapView: View {
                 ProgressView()
 
             case .loaded(let cells, let child):
-                Map(position: $cameraPosition) {
-                    ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
-                        Annotation("", coordinate: CLLocationCoordinate2D(latitude: cell.lat, longitude: cell.lng)) {
-                            Circle()
-                                .fill(color(for: cell.level))
-                                .frame(width: 14, height: 14)
-                                .opacity(0.75)
+                MapReader { proxy in
+                    Map(position: $cameraPosition) {
+                        ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
+                            Annotation("", coordinate: CLLocationCoordinate2D(latitude: cell.lat, longitude: cell.lng)) {
+                                Circle()
+                                    .fill(color(for: cell.level))
+                                    .frame(width: 14, height: 14)
+                                    .opacity(0.75)
+                            }
                         }
+                        Marker("自宅", systemImage: "house.fill", coordinate: child.home.clLocationCoordinate2D)
+                            .tint(.blue)
+                        Marker("学校", systemImage: "graduationcap.fill", coordinate: child.school.clLocationCoordinate2D)
+                            .tint(.indigo)
                     }
-                    Marker("自宅", systemImage: "house.fill", coordinate: child.home.clLocationCoordinate2D)
-                        .tint(.blue)
-                    Marker("学校", systemImage: "graduationcap.fill", coordinate: child.school.clLocationCoordinate2D)
-                        .tint(.indigo)
-                }
-                .onAppear {
-                    let bbox = ParentMapViewModel.bbox(
-                        home: child.home.clLocationCoordinate2D,
-                        school: child.school.clLocationCoordinate2D
-                    )
-                    cameraPosition = .region(Self.region(fromBBox: bbox))
+                    .simultaneousGesture(longPressGesture(proxy: proxy))
+                    .onAppear {
+                        let bbox = ParentMapViewModel.bbox(
+                            home: child.home.clLocationCoordinate2D,
+                            school: child.school.clLocationCoordinate2D
+                        )
+                        cameraPosition = .region(Self.region(fromBBox: bbox))
+                    }
                 }
 
             case .failed(let message):
@@ -57,6 +66,20 @@ public struct ParentMapView: View {
                 await viewModel.load(familyId: familyId, childId: childId)
             }
         }
+        .sheet(item: $selectedSpot) { spot in
+            SpotDetailView(lat: spot.coordinate.latitude, lng: spot.coordinate.longitude)
+        }
+    }
+
+    /// 長押しでピンを立てた地点の詳細を開くジェスチャー
+    private func longPressGesture(proxy: MapProxy) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.5)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onEnded { value in
+                guard case .second(true, let drag?) = value,
+                      let coordinate = proxy.convert(drag.location, from: .local) else { return }
+                selectedSpot = SelectedSpot(coordinate: coordinate)
+            }
     }
 
     private func color(for level: RiskLevel) -> Color {
